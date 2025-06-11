@@ -172,15 +172,7 @@ if ANALYSIS_OBJECT == "AI_BEACON":
                         PART_ID,
                         SPECIFIED_DATE
                     )
-else:
-    # GPS Data用のダウンローダ
-    use_download = original_GPS_DL(
-                        DATABRICKS_PREFIX,
-                        WORK_PATH + PROJECT_NAME,
-                        PREPROCESS_PATH,
-                        PART_ID,
-                        SPECIFIED_DATE
-                    )
+
 
 
 # COMMAND ----------
@@ -191,11 +183,6 @@ else:
 #  |-- subsection_id: network_id
 #  |-- unique_id:     unit_id
 # 
-# ・GPS Data
-#  |-- part_id:       user_id
-#  |-- section_id:    undefined
-#  |-- subsection_id: network_id
-#  |-- unique_id:     place_id
 
 nwm_conf = use_download.read_csv_file('input/' + NETWORK_LIST_FILE)
 if ANALYSIS_OBJECT == "AI_BEACON":
@@ -279,74 +266,6 @@ if ANALYSIS_OBJECT == "AI_BEACON":
         'part_to_unique_list'             : utid_list,
         'section_to_unique_dict'          : fl2ut_dict,
         'subsection_to_unique_dict'       : fl2nk2ut_dict,
-        'folder_name'                     : PROJECT_NAME,
-        'daily_start_time'                : pj_conf_dic['daily_start_time'],
-        'daily_end_time'                  : pj_conf_dic['daily_end_time'],
-        'daily_time_interval'             : pj_conf_dic['daily_time_interval'],
-        'daily_population_area'           : pj_conf_dic['daily_population_area'],
-        'daily_estimate_migration_number' : pj_conf_dic['daily_estimate_migration_number'],
-        'hourly_start_time'               : pj_conf_dic['hourly_start_time'],
-        'hourly_end_time'                 : pj_conf_dic['hourly_end_time'],
-        'hourly_time_interval'            : pj_conf_dic['hourly_time_interval'],
-        'hourly_population_area'          : pj_conf_dic['hourly_population_area'],
-        'hourly_estimate_migration_number': pj_conf_dic['hourly_estimate_migration_number'],
-        'GROUP_MODE_FLAG'                 : ENABLE_GROUP_MODE,
-        'SPECIFY_TIME_FLAG'               : ENABLE_SPECIFY_TIME,
-    }
-    
-    # networkmodel処理
-    networkmodel(spec_comb, param_dict_nwm)
-else:
-    # =====================================================================
-    # Deprecated: 将来的には削除の予定
-    # =====================================================================
-    if pj_conf_dic['daily_population_area'] != 'ALL_FLOOR':
-        raise ValueError('Not supported for processing SEPARATE FLOOR.')
-    if pj_conf_dic['daily_estimate_migration_number'][0] != 'ALL_FLOOR':
-        raise ValueError('Not supported for processing SEPARATE FLOOR.')
-    if pj_conf_dic['hourly_population_area'] != 'ALL_FLOOR':
-        raise ValueError('Not supported for processing SEPARATE FLOOR.')
-    if pj_conf_dic['hourly_estimate_migration_number'][0] != 'ALL_FLOOR':
-        raise ValueError('Not supported for processing SEPARATE FLOOR.')
-    
-    
-    
-    nwm_tmp   = nwm_conf.astype({'user_id': str})
-    nwm_tmp   = nwm_tmp[nwm_tmp['user_id'] == PART_ID]
-    
-    # 特定のユーザーIDに対応するプレイスIDをリストに登録
-    peid_list = sorted(nwm_tmp['place_id'].drop_duplicates().to_list())
-    peid_list = list(map(lambda x: str(x), peid_list))
-    
-    # network_id・place_idの対応辞書を取得する
-    # GPS Dataにおけるsection_idは未定義であるため、
-    un2pe_dict    = {}
-    un2nk2pe_dict = {}
-    
-    # 特定のユーザーIDに対応するプレイスIDを辞書に登録
-    un2pe_dict['undefined'] = peid_list
-            
-    # 特定のユーザーIDに対応するネットワークIDを辞書に登録
-    nkid_list = sorted(nwm_tmp['network_id'].drop_duplicates().to_list())
-    nkid_list = list(map(lambda x: str(x), nkid_list))
-    un2nk2pe_dict['undefined'] = {}
-    for network_id in nkid_list:
-        nwm_tmp2 = nwm_tmp.astype({'network_id': str})
-        nwm_tmp2 = nwm_tmp2[nwm_tmp2['network_id'] == network_id]
-        
-        # 特定のネットワークIDに対応するプレイスIDを辞書に登録
-        un2nk2pe_list = sorted(nwm_tmp2['place_id'].drop_duplicates().to_list())
-        un2nk2pe_list = list(map(lambda x: str(x), un2nk2pe_list))
-        un2nk2pe_dict['undefined'][network_id] = un2nk2pe_list
-    
-    
-    # print(peid_list)
-    param_dict_nwm = {
-        'date'                            : SPECIFIED_DATE,
-        'part_id'                         : PART_ID,
-        'part_to_unique_list'             : peid_list,
-        'section_to_unique_dict'          : un2pe_dict,
-        'subsection_to_unique_dict'       : un2nk2pe_dict,
         'folder_name'                     : PROJECT_NAME,
         'daily_start_time'                : pj_conf_dic['daily_start_time'],
         'daily_end_time'                  : pj_conf_dic['daily_end_time'],

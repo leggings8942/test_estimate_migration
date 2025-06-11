@@ -62,16 +62,10 @@ def get_widgets_var(key:str) -> str:
 # COMMAND ----------
 # databricksのウィジットからの設定の読み込み
 PROJECT_NAME         = get_widgets_var("PROJECT_NAME")                                # プロジェクト名
-RUN_MODE:Literal['REGULAR_EXECUTION', 'SPOT_EXECUTION'] = get_widgets_var("RUN_MODE") # 実行モード
 SPECIFIED_START_DATE = get_widgets_var("SPECIFIED_START_DATE")                        # 指定した開始日
 SPECIFIED_END_DATE   = get_widgets_var("SPECIFIED_END_DATE")                          # 指定した終了日
 
 # COMMAND ----------
-# メモ：
-# 本来ならば基本設定ファイルの設定内容の確認も行うべきである
-# しかしこのファイルの設定内容は全てのプロジェクトに共通するものであり、滅多に編集することはない
-# 個々の案件ごとに実行ごとに確認処理を行うのは非効率である
-# そのため、この設定ファイルに対する確認処理は行わない事とする
 
 # 基本設定ファイルの読み込み
 bs_conf_dic = get_yaml_dict('../config/basic_config.yaml')
@@ -117,7 +111,6 @@ HOURLY_VISITOR_NUMBER:str                        = pj_conf_dic['hourly_visitor_n
 # 簡易デバッグ用
 # databricksのウィジット・ジョブからの設定内容
 print(f'PROJECT_NAME:                     {PROJECT_NAME}')
-print(f'RUN_MODE:                         {RUN_MODE}')
 print(f'SPECIFIED_START_DATE:             {SPECIFIED_START_DATE}')
 print(f'SPECIFIED_END_DATE:               {SPECIFIED_END_DATE}')
 
@@ -183,19 +176,10 @@ df_network = spark.read\
 
 
 # COMMAND ----------
-if RUN_MODE == "REGULAR_EXECUTION":
-    dt     = datetime.datetime.now(tz=pytz.timezone('Asia/Tokyo'))
-    dt_aib = dt - relativedelta(days=1) + datetime.timedelta(hours=9)
-    dt_gps = dt - relativedelta(days=8) + datetime.timedelta(hours=9)
-    
-    if ANALYSIS_OBJECT == 'AI_BEACON':
-        day_list = [dt_aib.strftime('%Y%m%d')]
-    else:
-        day_list = [dt_gps.strftime('%Y%m%d')]
-else:
-    start_date = SPECIFIED_START_DATE
-    end_date   = SPECIFIED_END_DATE
-    day_list   = [d.strftime("%Y%m%d") for d in pd.date_range(start_date, end_date)]
+dt       = datetime.datetime.now(tz=pytz.timezone('Asia/Tokyo'))
+dt_aib   = dt - relativedelta(days=1) + datetime.timedelta(hours=9)
+dt_gps   = dt - relativedelta(days=8) + datetime.timedelta(hours=9)
+day_list = [dt_aib.strftime('%Y%m%d')]
 
 # COMMAND ----------
 # 各種IDの対応一覧
@@ -205,20 +189,10 @@ else:
 #  |-- subsection_id: network_id
 #  |-- unique_id:     unit_id
 # 
-# ・GPS Data
-#  |-- part_id:       user_id
-#  |-- section_id:    undefined
-#  |-- subsection_id: network_id
-#  |-- unique_id:     place_id
 
 
 # AI Beaconの場合にはplace_idがpart_idとなる
-# GPS Data の場合にはuser_id がpart_idとなる
-if ANALYSIS_OBJECT == 'AI_BEACON':
-    part_id_list = sorted(row['place_id'] for row in df_network.select(col('place_id')).drop_duplicates().collect())
-else:
-    part_id_list = sorted(row['user_id']  for row in df_network.select(col('user_id')).drop_duplicates().collect())
-
+part_id_list = sorted(row['place_id'] for row in df_network.select(col('place_id')).drop_duplicates().collect())
 
 
 # 旧バージョンで利用されていたパスポリシーが有効なら

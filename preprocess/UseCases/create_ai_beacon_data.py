@@ -241,7 +241,5 @@ def create_data_1min(spec_comb:upload_to_file, df:DataFrame) -> None:
 def create_ai_beacon_data(spec_comb:upload_to_file, df:DataFrame) -> None:
     create_data_daily( spec_comb, df) # 1日単位でデータを集計し保存する
     create_data_hourly(spec_comb, df) # 1時間単位でデータを集計し保存する
-    # create_data_30min( spec_comb, df) # 30分単位でデータを集計し保存する
-    # create_data_10min( spec_comb, df) # 10分単位でデータを集計し保存する
     create_data_1min(  spec_comb, df) # 1分単位でデータを集計し保存する
 
